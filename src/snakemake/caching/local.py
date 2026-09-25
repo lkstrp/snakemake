@@ -100,6 +100,8 @@ class OutputFileCache(AbstractOutputFileCache):
             )
 
             self.check_readable(cachefile)
+            # run: jobs are prepared only after a cache miss, so the parent may not exist yet.
+            outputfile.parent.mkdir(parents=True, exist_ok=True)
             if cachefile.is_dir():
                 # For directories, create a new one and symlink each entry.
                 # Then, the .snakemake_timestamp of the new dir is touched

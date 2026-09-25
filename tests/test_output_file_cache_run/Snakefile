@@ -1,0 +1,10 @@
+"""A cache hit for a run-directive job must create the output's parent directory."""
+
+
+rule a:
+    output:
+        "sub/dir/test.out",
+    cache: True
+    run:
+        with open(output[0], "w") as f:
+            f.write("test\n")

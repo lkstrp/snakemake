@@ -2355,6 +2355,16 @@ def test_default_target():
     run(dpath("test_default_target"))
 
 
+def test_output_file_cache_run_directive(tmp_path, monkeypatch):
+    # The second run hits the cache in a fresh workdir where sub/dir/ is missing.
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    monkeypatch.setenv("SNAKEMAKE_OUTPUT_CACHE", str(cache))
+    test_path = dpath("test_output_file_cache_run")
+    run(test_path, cache=[])
+    run(test_path, cache=[])
+
+
 def test_cache_multioutput():
     os.environ["SNAKEMAKE_OUTPUT_CACHE"] = "cache"
     run(dpath("test_cache_multioutput"), cache=["a"])
