@@ -89,9 +89,20 @@ class OutputFileCache(AbstractOutputFileCache):
         """
         Retrieve cached output file and symlink to the place where the job expects it's output.
         """
-        for outputfile, cachefile in await self.get_outputfiles_and_cachefiles(job):
+        entries = await self.get_outputfiles_and_cachefiles(job)
+        for _, cachefile in entries:
             if not cachefile.exists():
                 self.raise_cache_miss_exception(job)
+        cached_dirs = [
+            outputfile for outputfile, cachefile in entries if cachefile.is_dir()
+        ]
+
+        for outputfile, cachefile in entries:
+            # A file inside a directory output is already an entry of the cached directory.
+            if not cachefile.is_dir() and any(
+                outputfile.is_relative_to(d) for d in cached_dirs
+            ):
+                continue
 
             logger.debug(
                 "Output file {} exists as {} in the cache.".format(
