@@ -1,4 +1,4 @@
-"""A cache hit must not symlink a file output that lies inside a directory output twice."""
+"""Cache hits for directory outputs: no double symlink, no stale timestamp."""
 
 
 rule all:
@@ -7,7 +7,17 @@ rule all:
         "file_before/dir/a.txt",
 
 
+rule make_input:
+    output:
+        "in.txt",
+    run:
+        with open(output[0], "w") as f:
+            f.write("in\n")
+
+
 rule file_after_dir:
+    input:
+        "in.txt",
     output:
         dir=directory("file_after/dir"),
         file="file_after/dir/a.txt",
@@ -22,6 +32,8 @@ rule file_after_dir:
 
 
 rule file_before_dir:
+    input:
+        "in.txt",
     output:
         file="file_before/dir/a.txt",
         dir=directory("file_before/dir"),
