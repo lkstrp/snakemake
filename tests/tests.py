@@ -2355,6 +2355,16 @@ def test_default_target():
     run(dpath("test_default_target"))
 
 
+def test_output_file_cache_dep_outputs(tmp_path, monkeypatch):
+    # Both runs must keep a.txt and b.txt consumers apart in the cache.
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    monkeypatch.setenv("SNAKEMAKE_OUTPUT_CACHE", str(cache))
+    test_path = dpath("test_output_file_cache_dep_outputs")
+    run(test_path, cache=[])
+    run(test_path, cache=[])
+
+
 def test_cache_multioutput():
     os.environ["SNAKEMAKE_OUTPUT_CACHE"] = "cache"
     run(dpath("test_cache_multioutput"), cache=["a"])

@@ -1,0 +1,28 @@
+"""Jobs consuming different outputs of one upstream job must not share a cache entry."""
+
+
+rule all:
+    input:
+        "out/a.txt",
+        "out/b.txt",
+
+
+rule split:
+    output:
+        a="a.txt",
+        b="b.txt",
+    cache: True
+    run:
+        for name, path in output.items():
+            with open(path, "w") as f:
+                f.write(f"{name}\n")
+
+
+rule copy:
+    input:
+        "{x}.txt",
+    output:
+        "out/{x}.txt",
+    cache: True
+    shell:
+        "cp {input} {output}"
