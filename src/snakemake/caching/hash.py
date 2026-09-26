@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from snakemake.jobs import Job
 
 # ATTENTION: increase version number whenever the hashing algorithm below changes!
-__version__ = "0.1"
+__version__ = "0.2"
 
 
 class ProvenanceHashMap:
@@ -150,14 +150,18 @@ class ProvenanceHashMap:
                 h.update(job.container_img_url.encode())
 
         # Generate hashes of dependencies, and add them in a blockchain fashion (as input to the current hash, sorted by hash value).
+        # Each dependency hash is paired with the positions of the outputs this job
+        # consumes, so consumers of different outputs of one job hash differently.
+        deps = list(job.dag.dependencies[job].items())
         hashes = await asyncio.gather(
-            *[
-                self._get_provenance_hash(dep)
-                for dep in set(job.dag.dependencies[job].keys())
-            ]
+            *[self._get_provenance_hash(dep) for dep, _ in deps]
         )
-        for dep_hash in sorted(hashes):
-            h.update(dep_hash.encode())
+        entries = []
+        for (dep, files), dep_hash in zip(deps, hashes):
+            consumed = ",".join(str(i) for i, f in enumerate(dep.output) if f in files)
+            entries.append(f"{dep_hash}:{consumed}")
+        for entry in sorted(entries):
+            h.update(entry.encode())
 
         provenance_hash = h.hexdigest()
 
