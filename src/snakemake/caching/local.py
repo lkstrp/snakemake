@@ -119,6 +119,9 @@ class OutputFileCache(AbstractOutputFileCache):
                 # by the executor.
                 outputfile.mkdir(parents=True, exist_ok=True)
                 for f in cachefile.iterdir():
+                    # A symlinked timestamp would keep the cache entry's mtime.
+                    if f.name == ".snakemake_timestamp":
+                        continue
                     self.symlink(f, outputfile / f.name)
             else:
                 self.symlink(cachefile, outputfile)
