@@ -1,0 +1,35 @@
+"""A cache hit must not symlink a file output that lies inside a directory output twice."""
+
+
+rule all:
+    input:
+        "file_after/dir/a.txt",
+        "file_before/dir/a.txt",
+
+
+rule file_after_dir:
+    output:
+        dir=directory("file_after/dir"),
+        file="file_after/dir/a.txt",
+    params:
+        order="after",
+    cache: True
+    run:
+        os.makedirs(output.dir, exist_ok=True)
+        for name in ("a.txt", "b.txt"):
+            with open(f"{output.dir}/{name}", "w") as f:
+                f.write(f"{name}\n")
+
+
+rule file_before_dir:
+    output:
+        file="file_before/dir/a.txt",
+        dir=directory("file_before/dir"),
+    params:
+        order="before",
+    cache: True
+    run:
+        os.makedirs(output.dir, exist_ok=True)
+        for name in ("a.txt", "b.txt"):
+            with open(f"{output.dir}/{name}", "w") as f:
+                f.write(f"{name}\n")
