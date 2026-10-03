@@ -339,7 +339,9 @@ class SpawnedJobArgsFactory:
             w2a("output_settings.benchmark_extended"),
             w2a("execution_settings.latency_wait"),
             w2a("scheduling_settings.scheduler", flag="--scheduler"),
-            w2a("workflow_settings.cache"),
+            # A bare --cache parses to [], which format_cli_arg drops as falsy,
+            # so spawned jobs ran without the cache. True renders the bare flag.
+            w2a("workflow_settings.cache", convert_value=lambda v: v or True),
             local_storage_prefix,
             format_cli_arg(
                 "--scheduler-solver-path",
