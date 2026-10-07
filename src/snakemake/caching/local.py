@@ -5,6 +5,7 @@ __license__ = "MIT"
 
 from tempfile import TemporaryDirectory
 from pathlib import Path
+import errno
 import os
 import shutil
 import stat
@@ -78,10 +79,16 @@ class OutputFileCache(AbstractOutputFileCache):
 
                 self.set_permissions(tmp)
 
-                # Move to the actual path (now we are on the same FS, hence move is atomic).
-                # Here we use the default copy function, also copying metadata (which is important here).
-                # It will always work, because we are guaranteed to be in the same FS.
-                shutil.move(tmp, cachefile)
+                # Move to the actual path (now we are on the same FS, hence rename is atomic).
+                # An equal-key job of the same DAG may have stored first: a file is
+                # replaced by equivalent content, a directory refuses with EEXIST or
+                # ENOTEMPTY and the existing entry wins (shutil.move would nest it).
+                try:
+                    os.rename(tmp, cachefile)
+                except OSError as e:
+                    if e.errno not in (errno.EEXIST, errno.ENOTEMPTY):
+                        raise
+                    logger.info(f"Cache entry {cachefile} already exists, keeping it.")
                 # now restore the outputfile via a symlink
                 self.symlink(cachefile, outputfile, utime=False)
 

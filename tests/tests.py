@@ -3638,3 +3638,16 @@ def test_delete_temp_fs():
         temp_file
     ), "temp file was not removed in main working directory"
     shutil.rmtree(outdir)
+
+
+def test_output_file_cache_equal_keys(tmp_path, monkeypatch):
+    # Two jobs with the same cache key in one DAG: the second store must not nest
+    # its directory into the first entry, and the output stays a flat directory.
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    monkeypatch.setenv("SNAKEMAKE_OUTPUT_CACHE", str(cache))
+    run(dpath("test_output_file_cache_equal_keys"), cache=[], check_results=False)
+    (entry,) = [p for p in cache.iterdir() if p.is_dir()]
+    assert sorted(p.name for p in entry.iterdir() if not p.name.startswith(".")) == [
+        "a.txt"
+    ]
